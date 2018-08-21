@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
 )
 
@@ -39,29 +41,33 @@ type (
 )
 
 func (i Image) String() string {
-	str := i.Name + "\n"
+	str := strings.Builder{}
+	str.WriteString(color.CyanString(i.Name + "\n"))
 	for _, tag := range i.Tags {
-		str += "\t- " + tag + "\n"
+		str.WriteString(color.WhiteString("- " + tag + "\n"))
 	}
 
-	return str
+	return str.String()
 }
 
 func (m Manifest) String() string {
-	str := ""
-	str += fmt.Sprintf("- Schema Version: %d\n", m.SchemaVersion)
-	str += fmt.Sprintln("- Digest:", m.Config.Digest)
-	str += fmt.Sprintln("- Media Type:", m.Config.MediaType)
-	str += fmt.Sprintf("- Size: %d\n", m.Config.Size)
+	str := strings.Builder{}
+	str.WriteString(color.WhiteString("- Schema Version: %d\n-", m.SchemaVersion))
+	str.WriteString(color.RedString(" Digest: "))
+	str.WriteString(color.WhiteString("%s\n", m.Config.Digest))
+	str.WriteString(color.WhiteString("- Media Type: %s\n", m.Config.MediaType))
+	str.WriteString(color.WhiteString("- Size: %d\n", m.Config.Size))
 
-	str += fmt.Sprintln("- Layers:")
+	str.WriteString(color.WhiteString("- Layers:\n"))
 	for _, layer := range m.Layers {
-		str += fmt.Sprintln("\t- Digest:", layer.Digest)
-		str += fmt.Sprintln("\t- Media Type:", layer.MediaType)
-		str += fmt.Sprintf("\t- Size: %d\n", layer.Size)
+		str.WriteString(color.WhiteString("  -"))
+		str.WriteString(color.RedString(" Digest: "))
+		str.WriteString(color.WhiteString("%s\n", m.Config.Digest))
+		str.WriteString(color.WhiteString("  - Media Type: %s\n", layer.MediaType))
+		str.WriteString(color.WhiteString("  - Size: %d\n", layer.Size))
 	}
 
-	return str
+	return str.String()
 }
 
 func GetCatalog(repoURL string, client *http.Client) (*Catalog, error) {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/codyleyhan/crane/docker"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -55,7 +56,7 @@ var imageCmd = &cobra.Command{
 
 		if cmd.Flag("all").Value.String() == "true" {
 			for _, tag := range i.Tags {
-				fmt.Println("Tag:", tag)
+				color.Cyan(tag)
 				manifest, err := docker.GetImageManifest(repo, image, tag, &client)
 				if err != nil {
 					fmt.Println(err)
