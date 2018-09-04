@@ -3,11 +3,13 @@ package cmd
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/codyleyhan/crane/docker"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -39,9 +41,16 @@ var lsCmd = &cobra.Command{
 				return
 			}
 
+			table := tablewriter.NewWriter(os.Stdout)
+			table.SetHeader([]string{"Name", "Tag"})
+
 			for _, image := range images {
-				fmt.Print(image)
+				for _, tag := range image.Tags {
+					table.Append([]string{image.Name, tag})
+				}
 			}
+
+			table.Render()
 		} else {
 			catalog, err := docker.GetCatalog(repo, &client)
 			if err != nil {
@@ -49,9 +58,14 @@ var lsCmd = &cobra.Command{
 				return
 			}
 
+			table := tablewriter.NewWriter(os.Stdout)
+			table.SetHeader([]string{"Name"})
+
 			for _, image := range catalog.Repositories {
-				fmt.Println(image)
+				table.Append([]string{image})
 			}
+
+			table.Render()
 		}
 	},
 }

@@ -3,12 +3,15 @@ package cmd
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/olekukonko/tablewriter"
+
 	"github.com/codyleyhan/crane/docker"
 
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -54,20 +57,32 @@ var imageCmd = &cobra.Command{
 			return
 		}
 
+		table := tablewriter.NewWriter(os.Stdout)
+
 		if cmd.Flag("all").Value.String() == "true" {
+			table.SetHeader([]string{"tag", "digest", "size", "media type"})
+
 			for _, tag := range i.Tags {
-				color.Cyan(tag)
 				manifest, err := docker.GetImageManifest(repo, image, tag, &client)
 				if err != nil {
 					fmt.Println(err)
 					return
 				}
 
-				fmt.Print(manifest)
+				table.Append([]string{
+					tag,
+					manifest.Config.Digest,
+					strconv.FormatInt(int64(manifest.Config.Size), 10),
+					manifest.Config.MediaType},
+				)
 			}
-
 		} else {
-			fmt.Print(i)
+			table.SetHeader([]string{"tag"})
+			for _, tag := range i.Tags {
+				table.Append([]string{tag})
+			}
 		}
+
+		table.Render()
 	},
 }
