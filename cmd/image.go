@@ -9,10 +9,9 @@ import (
 	"time"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/spf13/cobra"
 
 	"github.com/codyleyhan/crane/docker"
-
-	"github.com/spf13/cobra"
 )
 
 func init() {

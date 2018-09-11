@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 )
 
@@ -120,6 +122,24 @@ func GetImage(repoURL, name string, client *http.Client) (*Image, error) {
 	if err := decoder.Decode(&image); err != nil {
 		return nil, errors.Wrap(err, "problem decoding "+name)
 	}
+
+	// Sort by semantic versioning
+	versions := []*version.Version{}
+	notSemVer := []string{}
+	for _, tag := range image.Tags {
+		v, err := version.NewVersion(tag)
+		if err != nil {
+			notSemVer = append(notSemVer, tag)
+			continue
+		}
+		versions = append(versions, v)
+	}
+	sort.Sort(version.Collection(versions))
+	tags := make([]string, 0, len(image.Tags))
+	for _, tag := range versions {
+		tags = append(tags, tag.String())
+	}
+	image.Tags = append(tags, notSemVer...)
 
 	return &image, nil
 }
