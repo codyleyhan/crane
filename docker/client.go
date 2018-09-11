@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/fatih/color"
 	"github.com/hashicorp/go-version"
@@ -95,15 +96,30 @@ func GetAllImages(repoURL string, client *http.Client) ([]*Image, error) {
 		return nil, err
 	}
 
-	images := make([]*Image, 0, len(catalog.Repositories))
+	results := make(chan *Image, len(catalog.Repositories))
+	wg := sync.WaitGroup{}
+	wg.Add(len(catalog.Repositories))
 
 	for _, repo := range catalog.Repositories {
-		image, err := GetImage(repoURL, repo, client)
-		if err != nil {
-			return nil, err
-		}
+		repo := repo
+		newClient := *client
+		go func() {
+			image, err := GetImage(repoURL, repo, &newClient)
+			if err != nil {
+				fmt.Println(err)
+				panic(err)
+			}
+			results <- image
+			wg.Done()
+		}()
+	}
 
-		images = append(images, image)
+	wg.Wait()
+	close(results)
+
+	images := make([]*Image, 0, len(catalog.Repositories))
+	for result := range results {
+		images = append(images, result)
 	}
 
 	return images, nil

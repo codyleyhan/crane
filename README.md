@@ -23,7 +23,7 @@ Use "crane [command] --help" for more information about a command.
 ## How to install
 
 ```
-go install github.com/codyleyhan/crane
+go get github.com/codyleyhan/crane && go install github.com/codyleyhan/crane
 ```
 
 ## Example usage
