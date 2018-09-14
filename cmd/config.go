@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/viper"
@@ -20,7 +21,8 @@ var configCmd = &cobra.Command{
 	Look at the documentation for all the settings that can be set
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("%+v\n", viper.AllSettings())
-		fmt.Printf("%+v\n", config)
+		fmt.Println("Profiles Saved:")
+		data, _ := json.MarshalIndent(viper.AllSettings(), "", "  ")
+		fmt.Println(string(data))
 	},
 }
