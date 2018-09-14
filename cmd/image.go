@@ -28,19 +28,21 @@ var imageCmd = &cobra.Command{
 	Long: `image determines information around docker images such as
 	tags, manifests and deleting docker images`,
 	ArgAliases: []string{"repo", "image"},
-	Args:       cobra.ExactArgs(2),
+	Args:       cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		repo := args[0]
-		image := args[1]
+		if config.Repo == nil {
+			fmt.Fprint(os.Stderr, "You must supply --repo=REPO or a profile")
+		}
+		image := args[0]
 
-		if !strings.HasPrefix(repo, "http") {
-			repo = "https://" + repo
+		if !strings.HasPrefix(*config.Repo, "http") {
+			*config.Repo = "https://" + *config.Repo
 		}
 
 		client := http.Client{Timeout: 10 * time.Second}
 
 		if cmd.Flag("tag").Value.String() != "" {
-			manifest, err := docker.GetImageManifest(repo, image, cmd.Flag("tag").Value.String(), &client, auth)
+			manifest, err := docker.GetImageManifest(*config.Repo, image, cmd.Flag("tag").Value.String(), &client, config.Auth)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -50,7 +52,7 @@ var imageCmd = &cobra.Command{
 			return
 		}
 
-		i, err := docker.GetImage(repo, image, &client, auth)
+		i, err := docker.GetImage(*config.Repo, image, &client, config.Auth)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -62,7 +64,7 @@ var imageCmd = &cobra.Command{
 			table.SetHeader([]string{"tag", "digest", "size", "media type"})
 
 			for _, tag := range i.Tags {
-				manifest, err := docker.GetImageManifest(repo, image, tag, &client, auth)
+				manifest, err := docker.GetImageManifest(*config.Repo, image, tag, &client, config.Auth)
 				if err != nil {
 					fmt.Println(err)
 					return

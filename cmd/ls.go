@@ -24,18 +24,19 @@ var lsCmd = &cobra.Command{
 	Use:   "ls [repo]",
 	Short: "lists all images in the docker repo",
 	Long:  `Lists all docker images that are currently in the repo and associated information`,
-	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		repo := args[0]
+		if config.Repo == nil {
+			fmt.Fprint(os.Stderr, "You must supply --repo=REPO or a profile")
+		}
 
-		if !strings.HasPrefix(repo, "http") {
-			repo = "https://" + repo
+		if !strings.HasPrefix(*config.Repo, "http") {
+			*config.Repo = "https://" + *config.Repo
 		}
 
 		client := http.Client{Timeout: 10 * time.Second}
 
 		if cmd.Flag("all").Value.String() == "true" {
-			images, err := docker.GetAllImages(repo, &client, auth)
+			images, err := docker.GetAllImages(*config.Repo, &client, config.Auth)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -52,7 +53,7 @@ var lsCmd = &cobra.Command{
 
 			table.Render()
 		} else {
-			catalog, err := docker.GetCatalog(repo, &client, auth)
+			catalog, err := docker.GetCatalog(*config.Repo, &client, config.Auth)
 			if err != nil {
 				fmt.Println(err)
 				return
