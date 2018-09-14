@@ -18,12 +18,12 @@ func init() {
 	rootCmd.AddCommand(imageCmd)
 
 	imageCmd.Flags().BoolP("all", "a", false, "includes all information for image")
-	imageCmd.Flags().StringP("tag", "t", "", "a specific tag for an image")
+	imageCmd.Flags().String("tag", "", "a specific tag for an image")
 }
 
 // imageCmd represents the image command
 var imageCmd = &cobra.Command{
-	Use:   "image [repo] [image]",
+	Use:   "image [image]",
 	Short: "Info about a docker image in repo",
 	Long: `image determines information around docker images such as
 	tags, manifests and deleting docker images`,
@@ -32,6 +32,7 @@ var imageCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if config.Repo == nil {
 			fmt.Fprint(os.Stderr, "You must supply --repo=REPO or a profile")
+			return
 		}
 		image := args[0]
 

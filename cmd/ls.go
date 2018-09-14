@@ -27,6 +27,7 @@ var lsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if config.Repo == nil {
 			fmt.Fprint(os.Stderr, "You must supply --repo=REPO or a profile")
+			return
 		}
 
 		if !strings.HasPrefix(*config.Repo, "http") {
