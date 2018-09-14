@@ -35,7 +35,7 @@ var lsCmd = &cobra.Command{
 		client := http.Client{Timeout: 10 * time.Second}
 
 		if cmd.Flag("all").Value.String() == "true" {
-			images, err := docker.GetAllImages(repo, &client)
+			images, err := docker.GetAllImages(repo, &client, auth)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -52,7 +52,7 @@ var lsCmd = &cobra.Command{
 
 			table.Render()
 		} else {
-			catalog, err := docker.GetCatalog(repo, &client)
+			catalog, err := docker.GetCatalog(repo, &client, auth)
 			if err != nil {
 				fmt.Println(err)
 				return

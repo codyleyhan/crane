@@ -41,6 +41,12 @@ type (
 		Config        Digest
 		Layers        []Digest
 	}
+
+	Auth struct {
+		Username *string
+		Password *string
+		Token    *string
+	}
 )
 
 func (i Image) String() string {
@@ -73,10 +79,30 @@ func (m Manifest) String() string {
 	return str.String()
 }
 
-func GetCatalog(repoURL string, client *http.Client) (*Catalog, error) {
+func createGetRequest(url string, auth Auth) (*http.Request, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	if auth.Username != nil && auth.Password != nil {
+		req.SetBasicAuth(*auth.Username, *auth.Password)
+	}
+	if auth.Token != nil {
+		req.Header.Add("Authorization", "Basic "+*auth.Token)
+	}
+
+	return req, nil
+}
+
+func GetCatalog(repoURL string, client *http.Client, auth Auth) (*Catalog, error) {
 	var catalog Catalog
 
-	catalogBody, err := client.Get(repoURL + catalogURL)
+	req, err := createGetRequest(repoURL+catalogURL, auth)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create request to get image manifeast")
+	}
+
+	catalogBody, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get list of images in repo")
 	}
@@ -90,8 +116,8 @@ func GetCatalog(repoURL string, client *http.Client) (*Catalog, error) {
 }
 
 // GetAllImages returns all images in the repo
-func GetAllImages(repoURL string, client *http.Client) ([]*Image, error) {
-	catalog, err := GetCatalog(repoURL, client)
+func GetAllImages(repoURL string, client *http.Client, auth Auth) ([]*Image, error) {
+	catalog, err := GetCatalog(repoURL, client, auth)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +130,7 @@ func GetAllImages(repoURL string, client *http.Client) ([]*Image, error) {
 		repo := repo
 		newClient := *client
 		go func() {
-			image, err := GetImage(repoURL, repo, &newClient)
+			image, err := GetImage(repoURL, repo, &newClient, auth)
 			if err != nil {
 				fmt.Println(err)
 				panic(err)
@@ -125,11 +151,16 @@ func GetAllImages(repoURL string, client *http.Client) ([]*Image, error) {
 	return images, nil
 }
 
-func GetImage(repoURL, name string, client *http.Client) (*Image, error) {
+func GetImage(repoURL, name string, client *http.Client, auth Auth) (*Image, error) {
 	var image Image
 	url := fmt.Sprintf(imageURL, name)
 
-	resp, err := client.Get(repoURL + url)
+	req, err := createGetRequest(repoURL+url, auth)
+	if err != nil {
+		return nil, errors.Wrap(err, "problem getting tags for "+name)
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting tags for "+name)
 	}
@@ -160,10 +191,10 @@ func GetImage(repoURL, name string, client *http.Client) (*Image, error) {
 	return &image, nil
 }
 
-func GetImageManifest(repoURL, image, tag string, client *http.Client) (*Manifest, error) {
+func GetImageManifest(repoURL, image, tag string, client *http.Client, auth Auth) (*Manifest, error) {
 	var manifest Manifest
 
-	req, err := http.NewRequest("GET", fmt.Sprintf(repoURL+manifestURL, image, tag), nil)
+	req, err := createGetRequest(fmt.Sprintf(repoURL+manifestURL, image, tag), auth)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create request to get image manifeast")
 	}

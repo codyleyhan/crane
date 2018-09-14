@@ -6,11 +6,51 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/codyleyhan/crane/docker"
+
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+var (
+	username string
+	password string
+	token    string
+
+	auth docker.Auth
 )
 
 func init() {
+	cobra.OnInitialize(initConfig)
+	rootCmd.PersistentFlags().StringVarP(&username, "username", "n", "", "username for docker repo")
+	rootCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "password for docker repo")
+	rootCmd.PersistentFlags().StringVarP(&token, "token", "t", "", "token for docker repo")
 	rootCmd.PersistentFlags().BoolP("unsecure", "u", false, "allows for accessing unsecure http repositories")
+}
+
+func initConfig() {
+	// Find home directory.
+	home, err := homedir.Dir()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	viper.AddConfigPath(home)
+	viper.SetConfigName(".crane")
+
+	if username != "" {
+		auth.Username = &username
+	}
+	if password != "" {
+		auth.Password = &password
+	}
+	if token != "" {
+		auth.Token = &token
+	}
+
+	viper.ReadInConfig()
 }
 
 // rootCmd represents the base command when called without any subcommands

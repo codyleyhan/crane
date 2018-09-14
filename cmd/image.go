@@ -40,7 +40,7 @@ var imageCmd = &cobra.Command{
 		client := http.Client{Timeout: 10 * time.Second}
 
 		if cmd.Flag("tag").Value.String() != "" {
-			manifest, err := docker.GetImageManifest(repo, image, cmd.Flag("tag").Value.String(), &client)
+			manifest, err := docker.GetImageManifest(repo, image, cmd.Flag("tag").Value.String(), &client, auth)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -50,7 +50,7 @@ var imageCmd = &cobra.Command{
 			return
 		}
 
-		i, err := docker.GetImage(repo, image, &client)
+		i, err := docker.GetImage(repo, image, &client, auth)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -62,7 +62,7 @@ var imageCmd = &cobra.Command{
 			table.SetHeader([]string{"tag", "digest", "size", "media type"})
 
 			for _, tag := range i.Tags {
-				manifest, err := docker.GetImageManifest(repo, image, tag, &client)
+				manifest, err := docker.GetImageManifest(repo, image, tag, &client, auth)
 				if err != nil {
 					fmt.Println(err)
 					return
